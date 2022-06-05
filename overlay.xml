@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repositories version="1.0">
+  <repo quality="experimental" status="unofficial">
+    <name>xdom</name>
+    <description>A personal Gentoo overlay</description>
+    <homepage>https://github.com/xdom/gentoo-overlay/</homepage>
+    <owner>
+      <name>xdom</name>
+      <email>dominik@matta.sk</email>
+    </owner>
+    <source type="git">git://github.com/xdom/gentoo-overlay.git</source>
+    <feed>https://github.com/xdom/gentoo-overlay/commits/master.atom</feed>
+  </repo>
+</repositories>
