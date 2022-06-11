@@ -2,7 +2,6 @@ EAPI="7"
 
 IUSE=""
 MODS="localpolicy"
-BASEPOL="2.20220106-r3"
 POLICY_FILES="sway.te sway.fc"
 
 inherit selinux-policy-2
