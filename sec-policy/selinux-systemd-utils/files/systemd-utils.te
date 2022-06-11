@@ -1,2 +1,4 @@
 policy_module(systemd-utils)
 
+allow udev_t systemd_hwdb_t:file getattr;
+
