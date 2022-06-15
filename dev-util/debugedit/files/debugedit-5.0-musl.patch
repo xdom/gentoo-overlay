@@ -1,0 +1,1042 @@
+diff --git a/tools/debugedit.c b/tools/debugedit.c
+index c422d03..cec762d 100644
+--- a/tools/debugedit.c
++++ b/tools/debugedit.c
+@@ -25,7 +25,7 @@
+ #include <byteswap.h>
+ #include <endian.h>
+ #include <errno.h>
+-#include <error.h>
++#include <err.h>
+ #include <limits.h>
+ #include <string.h>
+ #include <stdlib.h>
+@@ -536,7 +536,7 @@ setup_relbuf (DSO *dso, debug_section *sec, int *reltype)
+   relbuf = malloc (maxndx * sizeof (REL));
+   *reltype = dso->shdr[i].sh_type;
+   if (relbuf == NULL)
+-    error (1, errno, "%s: Could not allocate memory", dso->filename);
++    err (1, errno, "%s: Could not allocate memory", dso->filename);
+ 
+   symdata = elf_getdata (dso->scn[dso->shdr[i].sh_link], NULL);
+   assert (symdata != NULL && symdata->d_buf != NULL);
+@@ -630,7 +630,7 @@ setup_relbuf (DSO *dso, debug_section *sec, int *reltype)
+ #endif
+ 	default:
+ 	fail:
+-	  error (1, 0, "%s: Unhandled relocation %d at [%d] for %s section",
++	  err (1, 0, "%s: Unhandled relocation %d at [%d] for %s section",
+ 		 dso->filename, rtype, ndx, sec->name);
+ 	}
+       relend->ptr = sec->data
+@@ -673,17 +673,17 @@ update_rela_data (DSO *dso, struct debug_section *sec)
+       int ndx = relptr->ndx;
+ 
+       if (gelf_getrela (data, ndx, &rela) == NULL)
+-	error (1, 0, "Couldn't get relocation: %s",
++	err (1, 0, "Couldn't get relocation: %s",
+ 	       elf_errmsg (-1));
+ 
+       if (gelf_getsym (symdata, GELF_R_SYM (rela.r_info),
+ 		       &sym) == NULL)
+-	error (1, 0, "Couldn't get symbol: %s", elf_errmsg (-1));
++	err (1, 0, "Couldn't get symbol: %s", elf_errmsg (-1));
+ 
+       rela.r_addend = relptr->addend - sym.st_value;
+ 
+       if (gelf_update_rela (data, ndx, &rela) == 0)
+-	error (1, 0, "Couldn't update relocations: %s",
++	err (1, 0, "Couldn't update relocations: %s",
+ 	       elf_errmsg (-1));
+ 
+       ++relptr;
+@@ -742,7 +742,7 @@ read_abbrev (DSO *dso, unsigned char *ptr)
+   if (h == NULL)
+     {
+ no_memory:
+-      error (0, ENOMEM, "%s: Could not read .debug_abbrev", dso->filename);
++      err (0, ENOMEM, "%s: Could not read .debug_abbrev", dso->filename);
+       if (h)
+         htab_delete (h);
+       return NULL;
+@@ -764,7 +764,7 @@ no_memory:
+         }
+       if (*slot != NULL)
+ 	{
+-	  error (0, 0, "%s: Duplicate DWARF abbreviation %d", dso->filename,
++	  err (0, 0, "%s: Duplicate DWARF abbreviation %d", dso->filename,
+ 		 t->entry);
+ 	  free (t);
+ 	  htab_delete (h);
+@@ -800,7 +800,7 @@ no_memory:
+ 		       || form == DW_FORM_addrx3
+ 		       || form == DW_FORM_addrx4)))
+ 	    {
+-	      error (0, 0, "%s: Unknown DWARF DW_FORM_0x%x", dso->filename,
++	      err (0, 0, "%s: Unknown DWARF DW_FORM_0x%x", dso->filename,
+ 		     form);
+ 	      htab_delete (h);
+ 	      return NULL;
+@@ -816,7 +816,7 @@ no_memory:
+         }
+       if (read_uleb128 (ptr) != 0)
+         {
+-	  error (0, 0, "%s: DWARF abbreviation does not end with 2 zeros",
++	  err (0, 0, "%s: DWARF abbreviation does not end with 2 zeros",
+ 		 dso->filename);
+ 	  htab_delete (h);
+ 	  return NULL;
+@@ -1020,7 +1020,7 @@ string_find_new_entry (struct strings *strings, size_t old_idx)
+ 			  + (STRIDXENTRIES * sizeof (struct stridxentry)));
+       struct strentblock *newentries = malloc (entriessz);
+       if (newentries == NULL)
+-	error (1, errno, "Couldn't allocate new string entries block");
++	err (1, errno, "Couldn't allocate new string entries block");
+       else
+ 	{
+ 	  if (strings->entries == NULL)
+@@ -1040,7 +1040,7 @@ string_find_new_entry (struct strings *strings, size_t old_idx)
+   struct stridxentry **tres = tsearch (entry, &strings->strent_root,
+ 				       strent_compare);
+   if (tres == NULL)
+-    error (1, ENOMEM, "Couldn't insert new strtab idx");
++    err (1, ENOMEM, "Couldn't insert new strtab idx");
+   else if (*tres == entry)
+     {
+       /* idx not yet seen, must add actual str.  */
+@@ -1082,7 +1082,7 @@ record_file_string_entry_idx (bool line_strp, DSO *dso, size_t old_idx)
+       debug_section *sec = &debug_sections[line_strp
+ 					   ? DEBUG_LINE_STR : DEBUG_STR];
+       if (old_idx >= sec->size)
+-	error (1, 0, "Bad string pointer index %zd (%s)", old_idx, sec->name);
++	err (1, 0, "Bad string pointer index %zd (%s)", old_idx, sec->name);
+ 
+       Strent *strent;
+       const char *old_str = (char *)sec->data + old_idx;
+@@ -1103,7 +1103,7 @@ record_file_string_entry_idx (bool line_strp, DSO *dso, size_t old_idx)
+ 	    nsize += 1 + file_len;     /* + '/' */
+ 	  char *nname = new_string_storage (strings, nsize);
+ 	  if (nname == NULL)
+-	    error (1, ENOMEM, "Couldn't allocate new string storage");
++	    err (1, ENOMEM, "Couldn't allocate new string storage");
+ 	  memcpy (nname, dest_dir, dest_len);
+ 	  if (file_len > 0)
+ 	    {
+@@ -1117,7 +1117,7 @@ record_file_string_entry_idx (bool line_strp, DSO *dso, size_t old_idx)
+ 	  ret = true;
+ 	}
+       if (strent == NULL)
+-	error (1, ENOMEM, "Could not create new string table entry");
++	err (1, ENOMEM, "Could not create new string table entry");
+       else
+ 	entry->entry = strent;
+     }
+@@ -1138,13 +1138,13 @@ record_existing_string_entry_idx (bool line_strp, DSO *dso, size_t old_idx)
+       debug_section *sec = &debug_sections[line_strp
+ 					   ? DEBUG_LINE_STR : DEBUG_STR];
+       if (old_idx >= sec->size)
+-	error (1, 0, "Bad string pointer index %zd (%s)", old_idx, sec->name);
++	err (1, 0, "Bad string pointer index %zd (%s)", old_idx, sec->name);
+ 
+       const char *str = (char *)sec->data + old_idx;
+       Strent *strent = strtab_add_len (strings->str_tab,
+ 				       str, strlen (str) + 1);
+       if (strent == NULL)
+-	error (1, ENOMEM, "Could not create new string table entry");
++	err (1, ENOMEM, "Could not create new string table entry");
+       else
+ 	entry->entry = strent;
+     }
+@@ -1221,7 +1221,7 @@ get_line_table (DSO *dso, size_t off, struct line_table **table)
+ 						  + MIN_LINE_TABLES)));
+       if (new_table == NULL)
+ 	{
+-	  error (0, ENOMEM, "Couldn't add more debug_line tables");
++	  err (0, ENOMEM, "Couldn't add more debug_line tables");
+ 	  *table = NULL;
+ 	  return false;
+ 	}
+@@ -1242,13 +1242,13 @@ get_line_table (DSO *dso, size_t off, struct line_table **table)
+   unsigned char *endsec = ptr + debug_sections[DEBUG_LINE].size;
+   if (ptr == NULL)
+     {
+-      error (0, 0, "%s: No .line_table section", dso->filename);
++      err (0, 0, "%s: No .line_table section", dso->filename);
+       return false;
+     }
+ 
+   if (off > debug_sections[DEBUG_LINE].size)
+     {
+-      error (0, 0, "%s: Invalid .line_table offset 0x%zx",
++      err (0, 0, "%s: Invalid .line_table offset 0x%zx",
+ 	     dso->filename, off);
+       return false;
+     }
+@@ -1260,13 +1260,13 @@ get_line_table (DSO *dso, size_t off, struct line_table **table)
+   endcu += t->unit_length;
+   if (endcu == ptr + 0xffffffff)
+     {
+-      error (0, 0, "%s: 64-bit DWARF not supported", dso->filename);
++      err (0, 0, "%s: 64-bit DWARF not supported", dso->filename);
+       return false;
+     }
+ 
+   if (endcu > endsec)
+     {
+-      error (0, 0, "%s: .debug_line CU does not fit into section",
++      err (0, 0, "%s: .debug_line CU does not fit into section",
+ 	     dso->filename);
+       return false;
+     }
+@@ -1275,7 +1275,7 @@ get_line_table (DSO *dso, size_t off, struct line_table **table)
+   t->version = read_16 (ptr);
+   if (t->version != 2 && t->version != 3 && t->version != 4 && t->version != 5)
+     {
+-      error (0, 0, "%s: DWARF version %d unhandled", dso->filename,
++      err (0, 0, "%s: DWARF version %d unhandled", dso->filename,
+ 	     t->version);
+       return false;
+     }
+@@ -1286,7 +1286,7 @@ get_line_table (DSO *dso, size_t off, struct line_table **table)
+       assert (ptr_size != 0);
+       if (ptr_size != read_8 (ptr))
+ 	{
+-	  error (0, 0, "%s: .debug_line address size differs from .debug_info",
++	  err (0, 0, "%s: .debug_line address size differs from .debug_info",
+ 		 dso->filename);
+ 	  return false;
+ 	}
+@@ -1301,7 +1301,7 @@ get_line_table (DSO *dso, size_t off, struct line_table **table)
+   endprol += t->header_length;
+   if (endprol > endcu)
+     {
+-      error (0, 0, "%s: .debug_line CU prologue does not fit into CU",
++      err (0, 0, "%s: .debug_line CU prologue does not fit into CU",
+ 	     dso->filename);
+       return false;
+     }
+@@ -1327,7 +1327,7 @@ get_line_table (DSO *dso, size_t off, struct line_table **table)
+ 
+   if (ptr + t->opcode_base - 1 >= endcu)
+     {
+-      error (0, 0, "%s: .debug_line opcode table does not fit into CU",
++      err (0, 0, "%s: .debug_line opcode table does not fit into CU",
+ 	     dso->filename);
+       return false;
+     }
+@@ -1382,7 +1382,7 @@ edit_dwarf2_line (DSO *dso)
+ 
+   dso->lines.line_buf = malloc (dso->lines.debug_lines_len);
+   if (dso->lines.line_buf == NULL)
+-    error (1, ENOMEM, "No memory for new .debug_line table (0x%zx bytes)",
++    err (1, ENOMEM, "No memory for new .debug_line table (0x%zx bytes)",
+ 	   dso->lines.debug_lines_len);
+ 
+   linedata->d_size = dso->lines.debug_lines_len;
+@@ -1655,7 +1655,7 @@ skip_form (DSO *dso, uint32_t *formp, unsigned char **ptrp)
+       assert (len < UINT_MAX);
+       break;
+     default:
+-      error (0, 0, "%s: Unknown DWARF DW_FORM_0x%x", dso->filename, *formp);
++      err (0, 0, "%s: Unknown DWARF DW_FORM_0x%x", dso->filename, *formp);
+       return FORM_ERROR;
+     }
+ 
+@@ -1723,7 +1723,7 @@ read_dwarf4_line (DSO *dso, unsigned char *ptr, char *comp_dir,
+ 
+       if (value >= dirt_cnt)
+ 	{
+-	  error (0, 0, "%s: Wrong directory table index %u",
++	  err (0, 0, "%s: Wrong directory table index %u",
+ 		 dso->filename, value);
+ 	  return false;
+ 	}
+@@ -1747,7 +1747,7 @@ read_dwarf4_line (DSO *dso, unsigned char *ptr, char *comp_dir,
+       s = malloc (comp_dir_len + 1 + file_len + 1 + dir_len + 1);
+       if (s == NULL)
+ 	{
+-	  error (0, ENOMEM, "%s: Reading file table", dso->filename);
++	  err (0, ENOMEM, "%s: Reading file table", dso->filename);
+ 	  return false;
+ 	}
+       if (*file == '/')
+@@ -1793,7 +1793,7 @@ read_dwarf4_line (DSO *dso, unsigned char *ptr, char *comp_dir,
+ 		{
+ 		  ssize_t ret = write (list_file_fd, p, size);
+ 		  if (ret == -1)
+-		    error (1, errno, "Could not write to '%s'", list_file);
++		    err (1, errno, "Could not write to '%s'", list_file);
+ 		  size -= ret;
+ 		  p += ret;
+ 		}
+@@ -1842,7 +1842,7 @@ read_dwarf5_line_entries (DSO *dso, unsigned char **ptrp,
+       *ndir = entry_count;
+       *dirs = malloc (entry_count * sizeof (char *));
+       if (*dirs == NULL)
+-	error (1, errno, "%s: Could not allocate debug_line dirs",
++	err (1, errno, "%s: Could not allocate debug_line dirs",
+ 	       dso->filename);
+     }
+ 
+@@ -1893,7 +1893,7 @@ read_dwarf5_line_entries (DSO *dso, unsigned char **ptrp,
+ 		    }
+ 		  break;
+ 		default:
+-		  error (0, 0, "%s: Unsupported "
++		  err (0, 0, "%s: Unsupported "
+ 			 ".debug_line %s %u path DW_FORM_0x%x",
+ 			 dso->filename, entry_name, entryi, form);
+ 		  return false;
+@@ -1918,7 +1918,7 @@ read_dwarf5_line_entries (DSO *dso, unsigned char **ptrp,
+ 		  dirndx = do_read_32 (*ptrp);
+ 		  break;
+ 		default:
+-		  error (0, 0, "%s: Unsupported "
++		  err (0, 0, "%s: Unsupported "
+ 			 ".debug_line %s %u dirndx DW_FORM_0x%x",
+ 			 dso->filename, entry_name, entryi, form);
+ 		  return false;
+@@ -1926,7 +1926,7 @@ read_dwarf5_line_entries (DSO *dso, unsigned char **ptrp,
+ 
+ 	      if (dirndx > *ndir)
+ 		{
+-		  error (0, 0, "%s: Bad dir number %u in .debug_line %s",
++		  err (0, 0, "%s: Bad dir number %u in .debug_line %s",
+ 			 dso->filename, entryi, entry_name);
+ 		  return false;
+ 		}
+@@ -1950,7 +1950,7 @@ read_dwarf5_line_entries (DSO *dso, unsigned char **ptrp,
+ 		case FORM_ERROR:
+ 		  return false;
+ 		case FORM_INDIRECT:
+-		  error (0, 0, "%s: Unsupported "
++		  err (0, 0, "%s: Unsupported "
+ 			 ".debug_line %s %u DW_FORM_indirect",
+ 			 dso->filename, entry_name, entryi);
+ 		  return false;
+@@ -1971,7 +1971,7 @@ read_dwarf5_line_entries (DSO *dso, unsigned char **ptrp,
+ 	  char *s = malloc (comp_dir_len + 1 + file_len + 1 + dir_len + 1);
+ 	  if (s == NULL)
+ 	    {
+-	      error (0, ENOMEM, "%s: Reading file table", dso->filename);
++	      err (0, ENOMEM, "%s: Reading file table", dso->filename);
+ 	      return false;
+ 	    }
+ 	  if (file[0] == '/')
+@@ -2017,7 +2017,7 @@ read_dwarf5_line_entries (DSO *dso, unsigned char **ptrp,
+ 		    {
+ 		      ssize_t ret = write (list_file_fd, p, size);
+ 		      if (ret == -1)
+-			error (1, errno, "Could not write to '%s'", list_file);
++			err (1, errno, "Could not write to '%s'", list_file);
+ 		      size -= ret;
+ 		      p += ret;
+ 		    }
+@@ -2130,7 +2130,7 @@ edit_attributes_str_comp_dir (bool line_strp, DSO *dso, unsigned char **ptrp,
+       debug_section *sec = &debug_sections[line_strp
+ 					   ? DEBUG_LINE_STR : DEBUG_STR];
+       if (sec->data == NULL || idx >= sec->size)
+-	error (1, 0, "%s: Bad string pointer index %zd for comp_dir (%s)",
++	err (1, 0, "%s: Bad string pointer index %zd for comp_dir (%s)",
+ 	       dso->filename, idx, sec->name);
+       dir = (char *) sec->data + idx;
+ 
+@@ -2233,7 +2233,7 @@ edit_attributes (DSO *dso, unsigned char *ptr, struct abbrev_tag *t, int phase)
+ 			     producers will use DW_FORM_strp which is
+ 			     more efficient.  */
+ 			  if (orig_len < new_len)
+-			    error (0, 0, "Warning, not replacing comp_dir "
++			    err (0, 0, "Warning, not replacing comp_dir "
+ 				   "'%s' prefix ('%s' -> '%s') encoded as "
+ 				   "DW_FORM_string. "
+ 				   "Replacement too large.",
+@@ -2285,7 +2285,7 @@ edit_attributes (DSO *dso, unsigned char *ptr, struct abbrev_tag *t, int phase)
+ 						       ? DEBUG_LINE_STR
+ 						       : DEBUG_STR];
+ 		  if (idx >= sec->size)
+-		    error (1, 0,
++		    err (1, 0,
+ 			   "%s: Bad string pointer index %zd for unit name (%s)",
+ 			   dso->filename, idx, sec->name);
+ 		  char *name = (char *) sec->data + idx;
+@@ -2360,7 +2360,7 @@ edit_attributes (DSO *dso, unsigned char *ptr, struct abbrev_tag *t, int phase)
+ 	    {
+ 	      ssize_t ret = write (list_file_fd, p, size);
+ 	      if (ret == -1)
+-		error (1, errno, "Could not write to '%s'", list_file);
++		err (1, errno, "Could not write to '%s'", list_file);
+ 	      size -= ret;
+ 	      p += ret;
+ 	    }
+@@ -2374,7 +2374,7 @@ edit_attributes (DSO *dso, unsigned char *ptr, struct abbrev_tag *t, int phase)
+ 	      else
+ 		ret = write (list_file_fd, "", 1);
+ 	      if (ret == -1)
+-		error (1, errno, "Could not write to '%s'", list_file);
++		err (1, errno, "Could not write to '%s'", list_file);
+ 	    }
+ 	}
+     }
+@@ -2427,7 +2427,7 @@ edit_info (DSO *dso, int phase, struct debug_section *sec)
+       /* header size, version, unit_type, ptr_size.  */
+       if (ptr + 4 + 2 + 1 + 1 > endsec)
+ 	{
+-	  error (0, 0, "%s: %s CU header too small",
++	  err (0, 0, "%s: %s CU header too small",
+ 		 dso->filename, sec->name);
+ 	  return 1;
+ 	}
+@@ -2436,13 +2436,13 @@ edit_info (DSO *dso, int phase, struct debug_section *sec)
+       endcu += read_32 (ptr);
+       if (endcu == ptr + 0xffffffff)
+ 	{
+-	  error (0, 0, "%s: 64-bit DWARF not supported", dso->filename);
++	  err (0, 0, "%s: 64-bit DWARF not supported", dso->filename);
+ 	  return 1;
+ 	}
+ 
+       if (endcu > endsec)
+ 	{
+-	  error (0, 0, "%s: %s too small", dso->filename, sec->name);
++	  err (0, 0, "%s: %s too small", dso->filename, sec->name);
+ 	  return 1;
+ 	}
+ 
+@@ -2450,7 +2450,7 @@ edit_info (DSO *dso, int phase, struct debug_section *sec)
+       if (cu_version != 2 && cu_version != 3 && cu_version != 4
+ 	  && cu_version != 5)
+ 	{
+-	  error (0, 0, "%s: DWARF version %d unhandled", dso->filename,
++	  err (0, 0, "%s: DWARF version %d unhandled", dso->filename,
+ 		 cu_version);
+ 	  return 1;
+ 	}
+@@ -2462,7 +2462,7 @@ edit_info (DSO *dso, int phase, struct debug_section *sec)
+ 	  uint8_t unit_type = read_8 (ptr);
+ 	  if (unit_type != DW_UT_compile && unit_type != DW_UT_partial)
+ 	    {
+-	      error (0, 0, "%s: Unit type %u unhandled", dso->filename,
++	      err (0, 0, "%s: Unit type %u unhandled", dso->filename,
+ 		     unit_type);
+ 	      return 1;
+ 	    }
+@@ -2473,7 +2473,7 @@ edit_info (DSO *dso, int phase, struct debug_section *sec)
+       unsigned char *header_end = (cu_start + 23 + (cu_version < 5 ? 0 : 1));
+       if (header_end > endsec)
+ 	{
+-	  error (0, 0, "%s: %s CU header too small", dso->filename, sec->name);
++	  err (0, 0, "%s: %s CU header too small", dso->filename, sec->name);
+ 	  return 1;
+ 	}
+ 
+@@ -2481,9 +2481,9 @@ edit_info (DSO *dso, int phase, struct debug_section *sec)
+       if (value >= debug_sections[DEBUG_ABBREV].size)
+ 	{
+ 	  if (debug_sections[DEBUG_ABBREV].data == NULL)
+-	    error (0, 0, "%s: .debug_abbrev not present", dso->filename);
++	    err (0, 0, "%s: .debug_abbrev not present", dso->filename);
+ 	  else
+-	    error (0, 0, "%s: DWARF CU abbrev offset too large",
++	    err (0, 0, "%s: DWARF CU abbrev offset too large",
+ 		   dso->filename);
+ 	  return 1;
+ 	}
+@@ -2496,14 +2496,14 @@ edit_info (DSO *dso, int phase, struct debug_section *sec)
+ 	  ptr_size = cu_ptr_size;
+ 	  if (ptr_size != 4 && ptr_size != 8)
+ 	    {
+-	      error (0, 0, "%s: Invalid DWARF pointer size %d",
++	      err (0, 0, "%s: Invalid DWARF pointer size %d",
+ 		     dso->filename, ptr_size);
+ 	      return 1;
+ 	    }
+ 	}
+       else if (cu_ptr_size != ptr_size)
+ 	{
+-	  error (0, 0, "%s: DWARF pointer size differs between CUs",
++	  err (0, 0, "%s: DWARF pointer size differs between CUs",
+ 		 dso->filename);
+ 	  return 1;
+ 	}
+@@ -2524,7 +2524,7 @@ edit_info (DSO *dso, int phase, struct debug_section *sec)
+ 	  t = htab_find_with_hash (abbrev, &tag, tag.entry);
+ 	  if (t == NULL)
+ 	    {
+-	      error (0, 0, "%s: Could not find DWARF abbreviation %d",
++	      err (0, 0, "%s: Could not find DWARF abbreviation %d",
+ 		     dso->filename, tag.entry);
+ 	      htab_delete (abbrev);
+ 	      return 1;
+@@ -2596,7 +2596,7 @@ edit_dwarf2 (DSO *dso)
+ 		    {
+ 		      if (j != DEBUG_MACRO && j != DEBUG_TYPES)
+ 			{
+-			  error (0, 0, "%s: Found two copies of %s section",
++			  err (0, 0, "%s: Found two copies of %s section",
+ 				 dso->filename, name);
+ 			  return 1;
+ 			}
+@@ -2607,7 +2607,7 @@ edit_dwarf2 (DSO *dso)
+ 			  struct debug_section *sec;
+ 			  sec = calloc (sizeof (struct debug_section), 1);
+ 			  if (sec == NULL)
+-			    error (1, errno,
++			    err (1, errno,
+ 				   "%s: Could not allocate more %s sections",
+ 				   dso->filename, name);
+ 			  sec->name = name;
+@@ -2636,7 +2636,7 @@ edit_dwarf2 (DSO *dso)
+ 
+ 	    if (debug_sections[j].name == NULL)
+ 	      {
+-		error (0, 0, "%s: Unknown debugging section %s",
++		err (0, 0, "%s: Unknown debugging section %s",
+ 		       dso->filename, name);
+ 	      }
+ 	  }
+@@ -2668,7 +2668,7 @@ edit_dwarf2 (DSO *dso)
+ 			  multi_sec = multi_sec->next;
+ 			}
+ 		      if (multi_sec == NULL)
+-			error (0, 1, "No %s reloc section: %s",
++			err (0, 1, "No %s reloc section: %s",
+ 			       debug_sections[j].name, dso->filename);
+ 		    }
+ 		  else
+@@ -2694,7 +2694,7 @@ edit_dwarf2 (DSO *dso)
+     }
+   else
+     {
+-      error (0, 0, "%s: Wrong ELF data enconding", dso->filename);
++      err (0, 0, "%s: Wrong ELF data enconding", dso->filename);
+       return 1;
+     }
+ 
+@@ -2762,7 +2762,7 @@ edit_dwarf2 (DSO *dso)
+ 	      rels = dso->shdr[rndx].sh_size / dso->shdr[rndx].sh_entsize;
+ 	      rbuf = malloc (rels * sizeof (LINE_REL));
+ 	      if (rbuf == NULL)
+-		error (1, errno, "%s: Could not allocate line relocations",
++		err (1, errno, "%s: Could not allocate line relocations",
+ 		       dso->filename);
+ 
+ 	      /* Sort them by offset into section. */
+@@ -2772,7 +2772,7 @@ edit_dwarf2 (DSO *dso)
+ 		    {
+ 		      GElf_Rela rela;
+ 		      if (gelf_getrela (rdata, i, &rela) == NULL)
+-			error (1, 0, "Couldn't get relocation: %s",
++			err (1, 0, "Couldn't get relocation: %s",
+ 			       elf_errmsg (-1));
+ 		      rbuf[i].r_offset = rela.r_offset;
+ 		      rbuf[i].ndx = i;
+@@ -2781,7 +2781,7 @@ edit_dwarf2 (DSO *dso)
+ 		    {
+ 		      GElf_Rel rel;
+ 		      if (gelf_getrel (rdata, i, &rel) == NULL)
+-			error (1, 0, "Couldn't get relocation: %s",
++			err (1, 0, "Couldn't get relocation: %s",
+ 			       elf_errmsg (-1));
+ 		      rbuf[i].r_offset = rel.r_offset;
+ 		      rbuf[i].ndx = i;
+@@ -2802,14 +2802,14 @@ edit_dwarf2 (DSO *dso)
+ 		  if (rtype == SHT_RELA)
+ 		    {
+ 		      if (gelf_getrela (rdata, ndx, &rela) == NULL)
+-			error (1, 0, "Couldn't get relocation: %s",
++			err (1, 0, "Couldn't get relocation: %s",
+ 			       elf_errmsg (-1));
+ 		      r_offset = rela.r_offset;
+ 		    }
+ 		  else
+ 		    {
+ 		      if (gelf_getrel (rdata, ndx, &rel) == NULL)
+-			error (1, 0, "Couldn't get relocation: %s",
++			err (1, 0, "Couldn't get relocation: %s",
+ 			       elf_errmsg (-1));
+ 		      r_offset = rel.r_offset;
+ 		    }
+@@ -2821,7 +2821,7 @@ edit_dwarf2 (DSO *dso)
+ 		    lndx++;
+ 
+ 		  if (lndx >= dso->lines.used)
+-		    error (1, 0,
++		    err (1, 0,
+ 			   ".debug_line relocation offset out of range");
+ 
+ 		  /* Offset (pointing into the line program) moves
+@@ -2835,14 +2835,14 @@ edit_dwarf2 (DSO *dso)
+ 		    {
+ 		      rela.r_offset = r_offset;
+ 		      if (gelf_update_rela (rdata, ndx, &rela) == 0)
+-			error (1, 0, "Couldn't update relocation: %s",
++			err (1, 0, "Couldn't update relocation: %s",
+ 			       elf_errmsg (-1));
+ 		    }
+ 		  else
+ 		    {
+ 		      rel.r_offset = r_offset;
+ 		      if (gelf_update_rel (rdata, ndx, &rel) == 0)
+-			error (1, 0, "Couldn't update relocation: %s",
++			err (1, 0, "Couldn't update relocation: %s",
+ 			       elf_errmsg (-1));
+ 		    }
+ 		}
+@@ -2878,17 +2878,17 @@ edit_dwarf2 (DSO *dso)
+ 		      macro_version = read_16 (ptr);
+ 		      macro_flags = read_8 (ptr);
+ 		      if (macro_version < 4 || macro_version > 5)
+-			error (1, 0, "unhandled .debug_macro version: %d",
++			err (1, 0, "unhandled .debug_macro version: %d",
+ 			       macro_version);
+ 		      if ((macro_flags & ~2) != 0)
+-			error (1, 0, "unhandled .debug_macro flags: 0x%x",
++			err (1, 0, "unhandled .debug_macro flags: 0x%x",
+ 			       macro_flags);
+ 
+ 		      offset_len = (macro_flags & 0x01) ? 8 : 4;
+ 		      line_offset = (macro_flags & 0x02) ? 1 : 0;
+ 
+ 		      if (offset_len != 4)
+-			error (0, 1,
++			err (0, 1,
+ 			       "Cannot handle 8 byte macro offsets: %s",
+ 			       dso->filename);
+ 
+@@ -2947,7 +2947,7 @@ edit_dwarf2 (DSO *dso)
+ 		      ptr += offset_len;
+ 		      break;
+ 		    default:
+-		      error (1, 0, "Unhandled DW_MACRO op 0x%x", op);
++		      err (1, 0, "Unhandled DW_MACRO op 0x%x", op);
+ 		      break;
+ 		    }
+ 		}
+@@ -3102,26 +3102,26 @@ fdopen_dso (int fd, const char *name)
+   elf = elf_begin (fd, ELF_C_RDWR, NULL);
+   if (elf == NULL)
+     {
+-      error (0, 0, "cannot open ELF file: %s", elf_errmsg (-1));
++      err (0, 0, "cannot open ELF file: %s", elf_errmsg (-1));
+       goto error_out;
+     }
+ 
+   if (elf_kind (elf) != ELF_K_ELF)
+     {
+-      error (0, 0, "\"%s\" is not an ELF file", name);
++      err (0, 0, "\"%s\" is not an ELF file", name);
+       goto error_out;
+     }
+ 
+   if (gelf_getehdr (elf, &ehdr) == NULL)
+     {
+-      error (0, 0, "cannot get the ELF header: %s",
++      err (0, 0, "cannot get the ELF header: %s",
+ 	     elf_errmsg (-1));
+       goto error_out;
+     }
+ 
+   if (ehdr.e_type != ET_DYN && ehdr.e_type != ET_EXEC && ehdr.e_type != ET_REL)
+     {
+-      error (0, 0, "\"%s\" is not a shared library", name);
++      err (0, 0, "\"%s\" is not a shared library", name);
+       goto error_out;
+     }
+ 
+@@ -3132,13 +3132,13 @@ fdopen_dso (int fd, const char *name)
+ 	        + (ehdr.e_shnum + 20) * sizeof(Elf_Scn *));
+   if (!dso)
+     {
+-      error (0, ENOMEM, "Could not open DSO");
++      err (0, ENOMEM, "Could not open DSO");
+       goto error_out;
+     }
+ 
+   if (elf_getphdrnum (elf, &phnum) != 0)
+     {
+-      error (0, 0, "Couldn't get number of phdrs: %s", elf_errmsg (-1));
++      err (0, 0, "Couldn't get number of phdrs: %s", elf_errmsg (-1));
+       goto error_out;
+     }
+ 
+@@ -3191,7 +3191,7 @@ handle_build_id (DSO *dso, Elf_Data *build_id,
+ 
+   if (build_id_size != 16 && build_id_size != 20)
+     {
+-      error (1, 0, "Cannot handle %Zu-byte build ID", build_id_size);
++      err (1, 0, "Cannot handle %Zu-byte build ID", build_id_size);
+     }
+ 
+   int i = -1;
+@@ -3243,7 +3243,7 @@ handle_build_id (DSO *dso, Elf_Data *build_id,
+     if (elf64_xlatetom (&x, &x, dso->ehdr.e_ident[EI_DATA]) == NULL)
+       {
+       bad:
+-	error (1, 0, "Failed to compute header checksum: %s",
++	err (1, 0, "Failed to compute header checksum: %s",
+ 	       elf_errmsg (elf_errno ()));
+       }
+ 
+@@ -3388,7 +3388,7 @@ main (int argc, char *argv[])
+ 
+   if (optind != argc - 1)
+     {
+-      error (0, 0, "Need one FILE as input");
++      err (0, 0, "Need one FILE as input");
+       usage (argv[0], true);
+     }
+ 
+@@ -3396,18 +3396,18 @@ main (int argc, char *argv[])
+     {
+       if (base_dir == NULL)
+ 	{
+-	  error (1, 0, "You must specify a base dir if you specify a dest dir");
++	  err (1, 0, "You must specify a base dir if you specify a dest dir");
+ 	}
+     }
+ 
+   if (build_id_seed != NULL && do_build_id == 0)
+     {
+-      error (1, 0, "--build-id-seed (-s) needs --build-id (-i)");
++      err (1, 0, "--build-id-seed (-s) needs --build-id (-i)");
+     }
+ 
+   if (build_id_seed != NULL && strlen (build_id_seed) < 1)
+     {
+-      error (1, 0, "--build-id-seed (-s) string should be at least 1 char");
++      err (1, 0, "--build-id-seed (-s) string should be at least 1 char");
+     }
+ 
+   /* Ensure clean paths, users can muck with these. Also removes any
+@@ -3426,22 +3426,22 @@ main (int argc, char *argv[])
+ 
+   if (elf_version(EV_CURRENT) == EV_NONE)
+     {
+-      error (1, 0, "library out of date");
++      err (1, 0, "library out of date");
+     }
+ 
+   if (stat(file, &stat_buf) < 0)
+     {
+-      error (1, errno, "Failed to open input file '%s'", file);
++      err (1, errno, "Failed to open input file '%s'", file);
+     }
+ 
+   /* Make sure we can read and write */
+   if (chmod (file, stat_buf.st_mode | S_IRUSR | S_IWUSR) != 0)
+-    error (0, errno, "Failed to chmod input file '%s' to make sure we can read and write", file);
++    err (0, errno, "Failed to chmod input file '%s' to make sure we can read and write", file);
+ 
+   fd = open (file, O_RDWR);
+   if (fd < 0)
+     {
+-      error (1, errno, "Failed to open input file '%s'", file);
++      err (1, errno, "Failed to open input file '%s'", file);
+     }
+ 
+   dso = fdopen_dso (fd, file);
+@@ -3469,7 +3469,7 @@ main (int argc, char *argv[])
+ 	  /* TODO: Handle stabs */
+ 	  if (strcmp (name, ".stab") == 0)
+ 	    {
+-	      error (0, 0, "Stabs debuginfo not supported: %s", file);
++	      err (0, 0, "Stabs debuginfo not supported: %s", file);
+ 	      break;
+ 	    }
+ 	  if (!(do_build_id && no_recompute_build_id && !base_dir && !dest_dir)
+@@ -3546,7 +3546,7 @@ main (int argc, char *argv[])
+ 	  GElf_Shdr shdr_mem;
+ 	  GElf_Shdr *shdr = gelf_getshdr (scn, &shdr_mem);
+ 	  if (shdr == NULL)
+-	    error (1, 0, "Couldn't get shdr: %s", elf_errmsg (-1));
++	    err (1, 0, "Couldn't get shdr: %s", elf_errmsg (-1));
+ 
+ 	  /* Any sections we have changed aren't allocated sections,
+ 	     so we don't need to lookup any changed section sizes. */
+@@ -3566,7 +3566,7 @@ main (int argc, char *argv[])
+ 	  GElf_Shdr shdr_mem;
+ 	  GElf_Shdr *shdr = gelf_getshdr (scn, &shdr_mem);
+ 	  if (shdr == NULL)
+-	    error (1, 0, "Couldn't get shdr: %s", elf_errmsg (-1));
++	    err (1, 0, "Couldn't get shdr: %s", elf_errmsg (-1));
+ 
+ 	  /* A bug in elfutils before 0.169 means we have to write out
+ 	     all section data, even when nothing changed.
+@@ -3615,7 +3615,7 @@ main (int argc, char *argv[])
+ 		  shdr->sh_size = sec_size;
+ 		  shdr->sh_offset = sec_offset;
+ 		  if (gelf_update_shdr (scn, shdr) == 0)
+-		    error (1, 0, "Couldn't update shdr: %s",
++		    err (1, 0, "Couldn't update shdr: %s",
+ 			   elf_errmsg (-1));
+ 		}
+ 	    }
+@@ -3629,13 +3629,13 @@ main (int argc, char *argv[])
+ 	{
+ 	  dso->ehdr.e_shoff = new_offset;
+ 	  if (gelf_update_ehdr (elf, &dso->ehdr) == 0)
+-	    error (1, 0, "Couldn't update ehdr: %s", elf_errmsg (-1));
++	    err (1, 0, "Couldn't update ehdr: %s", elf_errmsg (-1));
+ 	}
+     }
+ 
+   if (elf_update (dso->elf, ELF_C_NULL) < 0)
+     {
+-      error (1, 0, "Failed to update file: %s", elf_errmsg (elf_errno ()));
++      err (1, 0, "Failed to update file: %s", elf_errmsg (elf_errno ()));
+     }
+ 
+   if (do_build_id && build_id != NULL)
+@@ -3643,17 +3643,17 @@ main (int argc, char *argv[])
+ 
+   if (elf_update (dso->elf, ELF_C_WRITE) < 0)
+     {
+-      error (1, 0, "Failed to write file: %s", elf_errmsg (elf_errno()));
++      err (1, 0, "Failed to write file: %s", elf_errmsg (elf_errno()));
+     }
+   if (elf_end (dso->elf) < 0)
+     {
+-      error (1, 0, "elf_end failed: %s", elf_errmsg (elf_errno()));
++      err (1, 0, "elf_end failed: %s", elf_errmsg (elf_errno()));
+     }
+   close (fd);
+ 
+   /* Restore old access rights */
+   if (chmod (file, stat_buf.st_mode) != 0)
+-    error (0, errno, "Failed to chmod input file '%s' to restore old access rights", file);
++    err (0, errno, "Failed to chmod input file '%s' to restore old access rights", file);
+ 
+   free ((char *) dso->filename);
+   destroy_strings (&dso->debug_str);
+diff --git a/tools/sepdebugcrcfix.c b/tools/sepdebugcrcfix.c
+index da50e6c..c8415d8 100644
+--- a/tools/sepdebugcrcfix.c
++++ b/tools/sepdebugcrcfix.c
+@@ -29,7 +29,7 @@
+ #include <endian.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+-#include <error.h>
++#include <err.h>
+ #include <libelf.h>
+ #include <gelf.h>
+ 
+@@ -125,24 +125,24 @@ crc32 (const char *fname, const char *base_fname, uint32_t *crcp)
+ {
+   char *reldir = strdup (base_fname);
+   if (reldir == NULL)
+-    error (1, 0, _("out of memory"));
++    err (1, 0, _("out of memory"));
+   char *s = reldir + strlen (reldir);
+   while (s > reldir && s[-1] != '/')
+     *--s = '\0';
+   char *debugname;
+   if (asprintf (&debugname, "%s/%s/%s", usr_lib_debug, reldir, fname) <= 0)
+-    error (1, 0, _("out of memory"));
++    err (1, 0, _("out of memory"));
+   free (reldir);
+   int fd = open (debugname, O_RDONLY);
+   if (fd == -1)
+     {
+-      error (0, errno, _("cannot open \"%s\""), debugname);
++      err (0, errno, _("cannot open \"%s\""), debugname);
+       return false;
+     }
+   off64_t size = lseek64 (fd, 0, SEEK_END);
+   if (size == -1)
+     {
+-      error (0, errno, _("cannot get size of \"%s\""), debugname);
++      err (0, errno, _("cannot get size of \"%s\""), debugname);
+       return false;
+     }
+   off_t offset = 0;
+@@ -162,7 +162,7 @@ crc32 (const char *fname, const char *base_fname, uint32_t *crcp)
+ 		      fd, offset);
+ 	  if (map == MAP_FAILED)
+ 	    {
+-	      error (0, errno, _("cannot map 0x%llx bytes at offset 0x%llx "
++	      err (0, errno, _("cannot map 0x%llx bytes at offset 0x%llx "
+ 				 "of file \"%s\""),
+ 		     (unsigned long long) maplen, (unsigned long long) offset,
+ 		     debugname);
+@@ -175,12 +175,12 @@ crc32 (const char *fname, const char *base_fname, uint32_t *crcp)
+ 	    {
+ 	      buf = malloc (maplen);
+ 	      if (buf == NULL)
+-		error (1, 0, _("out of memory"));
++		err (1, 0, _("out of memory"));
+ 	    }
+ 	  ssize_t got = pread (fd, buf, maplen, offset);
+ 	  if (got != maplen)
+ 	    {
+-	      error (0, errno, _("cannot read 0x%llx bytes at offset 0x%llx "
++	      err (0, errno, _("cannot read 0x%llx bytes at offset 0x%llx "
+ 				 "of file \"%s\""),
+ 		     (unsigned long long) maplen, (unsigned long long) offset,
+ 		     debugname);
+@@ -191,7 +191,7 @@ crc32 (const char *fname, const char *base_fname, uint32_t *crcp)
+ 	}
+       crc = calc_gnu_debuglink_crc32 (crc, map ?: buf, maplen);
+       if (map && munmap (map, maplen) != 0)
+-	error (1, errno, _("cannot unmap 0x%llx bytes at offset 0x%llx "
++	err (1, errno, _("cannot unmap 0x%llx bytes at offset 0x%llx "
+ 			   "of file \"%s\""),
+ 	       (unsigned long long) maplen, (unsigned long long) offset,
+ 	       debugname);
+@@ -200,7 +200,7 @@ crc32 (const char *fname, const char *base_fname, uint32_t *crcp)
+   free (buf);
+   if (close (fd) != 0)
+     {
+-      error (0, errno, _("cannot close \"%s\""), debugname);
++      err (0, errno, _("cannot close \"%s\""), debugname);
+       free (debugname);
+       return false;
+     }
+@@ -215,13 +215,13 @@ process (Elf *elf, int fd, const char *fname)
+   GElf_Ehdr ehdr_mem, *ehdr = gelf_getehdr (elf, &ehdr_mem);
+   if (ehdr == NULL)
+     {
+-      error (0, 0, _("cannot get ELF header of \"%s\""), fname);
++      err (0, 0, _("cannot get ELF header of \"%s\""), fname);
+       return false;
+     }
+   if (ehdr->e_ident[EI_DATA] != ELFDATA2LSB
+       && ehdr->e_ident[EI_DATA] != ELFDATA2MSB)
+     {
+-      error (0, 0, _("invalid ELF endianity of \"%s\""), fname);
++      err (0, 0, _("invalid ELF endianity of \"%s\""), fname);
+       return false;
+     }
+   Elf_Scn *scn = NULL;
+@@ -231,14 +231,14 @@ process (Elf *elf, int fd, const char *fname)
+       GElf_Shdr shdr_mem, *shdr = gelf_getshdr (scn, &shdr_mem);
+       if (shdr == NULL)
+ 	{
+-	  error (0, 0, _("cannot get section # %zu in \"%s\""),
++	  err (0, 0, _("cannot get section # %zu in \"%s\""),
+ 		 elf_ndxscn (scn), fname);
+ 	  continue;
+ 	}
+       const char *sname = elf_strptr (elf, ehdr->e_shstrndx, shdr->sh_name);
+       if (sname == NULL)
+ 	{
+-	  error (0, 0, _("cannot get name of section # %zu in \"%s\""),
++	  err (0, 0, _("cannot get name of section # %zu in \"%s\""),
+ 		 elf_ndxscn (scn), fname);
+ 	  continue;
+ 	}
+@@ -247,27 +247,27 @@ process (Elf *elf, int fd, const char *fname)
+       Elf_Data *data = elf_getdata (scn, NULL);
+       if (data == NULL)
+ 	{
+-	  error (0, 0, _("cannot get data of section \"%s\" # %zu in \"%s\""),
++	  err (0, 0, _("cannot get data of section \"%s\" # %zu in \"%s\""),
+ 		 scnname, elf_ndxscn (scn), fname);
+ 	  continue;
+ 	}
+       if ((data->d_size & 3) != 0)
+ 	{
+-	  error (0, 0, _("invalid size of section \"%s\" # %zu in \"%s\""),
++	  err (0, 0, _("invalid size of section \"%s\" # %zu in \"%s\""),
+ 		 scnname, elf_ndxscn (scn), fname);
+ 	  continue;
+ 	}
+       const uint8_t *zerop = memchr (data->d_buf, '\0', data->d_size);
+       if (zerop == NULL)
+ 	{
+-	  error (0, 0, _("no file string in section \"%s\" # %zu in \"%s\""),
++	  err (0, 0, _("no file string in section \"%s\" # %zu in \"%s\""),
+ 		 scnname, elf_ndxscn (scn), fname);
+ 	  continue;
+ 	}
+       const uint8_t *crcp = (const uint8_t *) ((uintptr_t) (zerop + 1 + 3) & -4);
+       if (crcp + 4 != (uint8_t *) data->d_buf + data->d_size)
+ 	{
+-	  error (0, 0, _("invalid format of section \"%s\" # %zu in \"%s\""),
++	  err (0, 0, _("invalid format of section \"%s\" # %zu in \"%s\""),
+ 		 scnname, elf_ndxscn (scn), fname);
+ 	  continue;
+ 	}
+@@ -292,14 +292,14 @@ process (Elf *elf, int fd, const char *fname)
+ 			      seekto);
+       if (wrote != sizeof (crc_targetendian))
+ 	{
+-	  error (0, 0, _("cannot write new CRC to 0x%llx "
++	  err (0, 0, _("cannot write new CRC to 0x%llx "
+ 			 "inside section \"%s\" # %zu in \"%s\""),
+ 		 (unsigned long long) seekto, scnname, elf_ndxscn (scn), fname);
+ 	  return false;
+ 	}
+       return true;
+     }
+-  error (0, 0, _("cannot find section \"%s\" in \"%s\""), scnname, fname);
++  err (0, 0, _("cannot find section \"%s\" in \"%s\""), scnname, fname);
+   return false;
+ }
+ 
+@@ -339,27 +339,27 @@ main (int argc, char **argv)
+ 
+   usr_lib_debug = argv[1];
+   if (elf_version (EV_CURRENT) == EV_NONE)
+-    error (1, 0, _("error initializing libelf: %s"), elf_errmsg (-1));
++    err (1, 0, _("error initializing libelf: %s"), elf_errmsg (-1));
+   for (int argi = 2; argi < argc; argi++)
+     {
+       const char *fname = argv[argi];
+       struct stat stat_buf;
+       if (stat(fname, &stat_buf) < 0)
+ 	{
+-	  error (0, errno, _("cannot stat input \"%s\""), fname);
++	  err (0, errno, _("cannot stat input \"%s\""), fname);
+ 	  failed_count++;
+ 	  continue;
+ 	}
+ 
+       /* Make sure we can read and write */
+       if (chmod (fname, stat_buf.st_mode | S_IRUSR | S_IWUSR) != 0)
+-	error (0, errno, _("cannot chmod \"%s\" to make sure we can read and write"), fname);
++	err (0, errno, _("cannot chmod \"%s\" to make sure we can read and write"), fname);
+ 
+       bool failed = false;
+       int fd = open64 (fname, O_RDWR);
+       if (fd == -1)
+ 	{
+-	  error (0, errno, _("cannot open \"%s\""), fname);
++	  err (0, errno, _("cannot open \"%s\""), fname);
+ 	  failed = true;
+ 	}
+       else
+@@ -367,7 +367,7 @@ main (int argc, char **argv)
+ 	  Elf *elf = elf_begin (fd, ELF_C_READ_MMAP, NULL);
+ 	  if (elf == NULL)
+ 	    {
+-	      error (0, 0, _("cannot open \"%s\" as ELF: %s"), fname,
++	      err (0, 0, _("cannot open \"%s\" as ELF: %s"), fname,
+ 		     elf_errmsg (-1));
+ 	      failed = true;
+ 	    }
+@@ -377,21 +377,21 @@ main (int argc, char **argv)
+ 		failed = true;
+ 	      if (elf_end (elf) != 0)
+ 		{
+-		  error (0, 0, _("cannot close \"%s\" as ELF: %s"), fname,
++		  err (0, 0, _("cannot close \"%s\" as ELF: %s"), fname,
+ 			 elf_errmsg (-1));
+ 		  failed = true;
+ 		}
+ 	    }
+ 	  if (close (fd) != 0)
+ 	    {
+-	      error (0, errno, _("cannot close \"%s\""), fname);
++	      err (0, errno, _("cannot close \"%s\""), fname);
+ 	      failed = true;
+ 	    }
+ 	}
+ 
+       /* Restore old access rights. Including any suid bits reset. */
+       if (chmod (fname, stat_buf.st_mode) != 0)
+-	error (0, errno, _("cannot chmod \"%s\" to restore old access rights"), fname);
++	err (0, errno, _("cannot chmod \"%s\" to restore old access rights"), fname);
+ 
+       if (failed)
+ 	failed_count++;
