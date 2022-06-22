@@ -1,7 +1,7 @@
 EAPI="7"
 
 IUSE=""
-MODS="localpolicy"
+MODS="systemd-utils"
 BASEPOL="2.20220106-r3"
 POLICY_FILES="systemd-utils.te"
 

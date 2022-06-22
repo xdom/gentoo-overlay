@@ -1,4 +1,9 @@
 policy_module(systemd-utils)
 
+gen_require(`
+  type udev_t;
+  type systemd_hwdb_t;
+')
+
 allow udev_t systemd_hwdb_t:file getattr;
 

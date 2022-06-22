@@ -1,7 +1,7 @@
 EAPI="7"
 
 IUSE=""
-MODS="localpolicy"
+MODS="seatd"
 POLICY_FILES="seatd.te"
 
 inherit selinux-policy-2

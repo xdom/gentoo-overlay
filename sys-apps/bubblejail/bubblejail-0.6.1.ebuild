@@ -24,6 +24,6 @@ DEPEND="
 	dev-python/PyQt5
 "
 RDEPEND="${DEPEND}"
-BDEPEND="sys-devel/m4"
+BDEPEND="sys-devel/m4 dev-python/sphinx"
 
 S="${WORKDIR}"
