@@ -1,0 +1,17 @@
+# -------------------------- Administration --------------------------
+app-admin/doas
+sys-process/audit
+
+# ----------------------------- Integrity ----------------------------
+app-forensics/aide
+app-forensics/chkrootkit
+
+# --------------------- Mandatory Access Control ---------------------
+sys-apps/apparmor
+sys-apps/apparmor-utils
+sys-policy/apparmor-profiles
+# TODO: Add sys-apps/apparmord from custom overlay
+
+# ------------------------------ Network -----------------------------
+net-dns/dnscrypt-proxy
+net-firewall/nftables

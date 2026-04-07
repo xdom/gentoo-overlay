@@ -1,0 +1,15 @@
+# ------------------------------ Portage -----------------------------
+app-portage/genlop
+
+# ----------------------------- Terminal -----------------------------
+app-editors/neovim
+app-shells/fzf
+app-shells/zsh
+app-shells/zsh-completions
+app-shells/gentoo-zsh-completions
+dev-util/git-delta
+media-fonts/terminus-font
+# TODO: Add chimera-coreutils to overlay
+# sys-apps/chimera-coreutils
+sys-apps/ripgrep-all
+sys-process/bottom

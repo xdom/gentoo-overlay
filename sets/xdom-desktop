@@ -1,0 +1,29 @@
+# ---------------------------- Compositor ----------------------------
+gui-apps/wideriver
+gui-wm/river
+
+# ------------------ Bar + Launcher + Notifications ------------------
+# TODO: Create package
+gui-apps/dam
+gui-apps/mako
+gui-apps/walker
+
+# ----------------------------- Utilities ----------------------------
+gui-apps/grim
+gui-apps/slurp
+gui-apps/wl-clipboard
+gui-apps/wdisplays
+
+# ------------------------------ UI Apps -----------------------------
+gui-apps/foot
+net-misc/networkmanager
+www-client/icecat
+
+# ------------------------------ Daemons -----------------------------
+# TODO: Move to this overlay with custom branding
+gui-apps/emptty
+gui-libs/xdg-desktop-portal-wlr
+media-video/pipewire
+sys-apps/xdg-desktop-portal-gtk
+sys-auth/elogind
+#sys-auth/seatd
