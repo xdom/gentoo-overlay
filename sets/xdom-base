@@ -1,8 +1,20 @@
 # ------------------------------ Portage -----------------------------
 app-portage/genlop
+app-portage/gentoolkit
+sys-apps/etckeeper
+
+# ------------------------------ System ------------------------------
+app-admin/doas
+app-admin/sysklogd
+net-misc/chrony
+sys-fs/btrfs-progs
+sys-fs/cryptsetup
+sys-kernel/installkernel
+sys-libs/timezone-data
 
 # ----------------------------- Terminal -----------------------------
 app-editors/neovim
+app-misc/tmux
 app-shells/fzf
 app-shells/zsh
 app-shells/zsh-completions
@@ -11,5 +23,7 @@ dev-util/git-delta
 media-fonts/terminus-font
 # TODO: Add chimera-coreutils to overlay
 # sys-apps/chimera-coreutils
+sys-apps/bat
+sys-apps/eza
 sys-apps/ripgrep-all
 sys-process/bottom
