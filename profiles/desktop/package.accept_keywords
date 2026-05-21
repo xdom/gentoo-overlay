@@ -1,0 +1,6 @@
+app-admin/keepassxc ~amd64
+gui-apps/walker ~amd64
+gui-apps/wdisplays ~amd64
+gui-wm/kwm ~amd64
+=gui-wm/river-0.4* ~amd64
+~gui-libs/gtk4-layer-shell-1.1.1 ~amd64
