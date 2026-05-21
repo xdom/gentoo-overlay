@@ -1,8 +1,7 @@
 =app-misc/yazi-26* ~amd64
+dev-ruby/optimist ~amd64
+dev-ruby/paint ~amd64
 dev-util/rustup ~amd64
 dev-vcs/lazygit ~amd64
 games-misc/lolcat ~amd64
 gui-apps/emptty ~amd64
-gui-apps/walker ~amd64
-gui-apps/wdisplays ~amd64
-gui-wm/kwm ~amd64
