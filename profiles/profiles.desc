@@ -1,3 +1,4 @@
-amd64     amd64-llvm-musl-hardened          dev
+amd64     base          dev
+amd64     desktop       dev
 
 # vim: set ts=8 noet ft=conf:
