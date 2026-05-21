@@ -1,23 +1,33 @@
 # ---------------------------- Compositor ----------------------------
-gui-apps/wideriver
-gui-wm/river
+>=gui-wm/river-0.4.1
+gui-wm/kwm
 
 # ------------------ Bar + Launcher + Notifications ------------------
-# TODO: Create package
-gui-apps/dam
 gui-apps/mako
 gui-apps/walker
 
+# ------------------------------- Fonts ------------------------------
+media-fonts/iosevka
+# TODO: media-fonts/openmoji
+# TODO: media-fonts/nerd-fonts-all
+media-fonts/symbols-nerd-font
+virtual/ttf-fonts
+
 # ----------------------------- Utilities ----------------------------
+media-sound/pavucontrol
+media-sound/playerctl
 gui-apps/grim
 gui-apps/slurp
 gui-apps/wl-clipboard
 gui-apps/wdisplays
 
 # ------------------------------ UI Apps -----------------------------
+app-admin/keepassxc
 gui-apps/foot
 net-misc/networkmanager
-www-client/icecat
+# Endless web browser dilemma ...
+# www-client/icecat
+www-client/firefox
 
 # ------------------------------ Daemons -----------------------------
 # TODO: Move to this overlay with custom branding
@@ -26,4 +36,5 @@ gui-libs/xdg-desktop-portal-wlr
 media-video/pipewire
 sys-apps/xdg-desktop-portal-gtk
 sys-auth/elogind
-#sys-auth/seatd
+# TODO: sys-apps/turnstile 
+# sys-auth/seatd

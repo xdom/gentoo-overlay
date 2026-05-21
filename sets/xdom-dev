@@ -1,2 +1,4 @@
 dev-debug/gdb
+dev-util/rustup
+dev-vcs/lazygit
 net-libs/nodejs
